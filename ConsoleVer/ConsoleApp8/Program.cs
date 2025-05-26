@@ -1,121 +1,169 @@
 ﻿using BestDelivery;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace ConsoleApp8
 {
     internal class Program
     {
-        private const double PriorityWeight = 0.6; // Вес приоритета в оценке
-        private const double DistanceWeight = 0.4; // Вес расстояния в оценке
+        private const double PriorityWeight = 0.6;
+        private const double DistanceWeight = 0.4;
+
         static void Main(string[] args)
         {
-            Order[] orders = OrderArrays.GetOrderArray5();
-            foreach (Order order in orders)
-            {
-                Console.WriteLine("id:" + order.ID + "Point:" + order.Destination.X + " , " + order.Destination.Y + "Priority:" + order.Priority);
-            }
+            Order[] orders = OrderArrays.GetOrderArray6();
+            PrintOrders(orders);
 
-          
-            foreach (int id in FindOptimalRoute(orders))
-            {
-                Console.Write(id+", ");
-            }
-            double routeCost;
-            if (RoutingTestLogic.TestRoutingSolution(orders.First(order => order.ID == -1).Destination, orders.Where(order => order.ID != -1).ToArray(), FindOptimalRoute(orders), out routeCost))
+            int[] route = FindOptimalRoute(orders);
+            PrintRoute(route);
+
+            if (RoutingTestLogic.TestRoutingSolution(
+                orders.First(o => o.ID == -1).Destination,
+                orders.Where(o => o.ID != -1).ToArray(),
+                route,
+                out double routeCost))
             {
                 Console.WriteLine($"Стоимость маршрута: {routeCost}");
             }
+        }
 
+        private static void PrintOrders(IEnumerable<Order> orders)
+        {
+            foreach (Order order in orders)
+            {
+                Console.WriteLine($"id:{order.ID} Point:{order.Destination.X}, {order.Destination.Y} Priority:{order.Priority}");
+            }
+        }
+
+        private static void PrintRoute(IEnumerable<int> route)
+        {
+            Console.WriteLine("Оптимальный маршрут:");
+            Console.WriteLine(string.Join(" -> ", route));
         }
 
         public static int[] FindOptimalRoute(Order[] orders)
         {
-            // 1. Проверка наличия склада
+            // 1. Проверка и подготовка данных
             var warehouse = orders.FirstOrDefault(o => o.ID == -1);
 
-            // 2. Отделяем заказы от склада
             var deliveryOrders = orders.Where(o => o.ID != -1).ToList();
+            if (deliveryOrders.Count == 0) return new[] { -1, -1 };
 
-            // 3. Создаем начальный маршрут: склад -> ... -> склад
+            // 2. Строим граф всех точек
+            var allPoints = orders.Select(o => o.Destination).ToList();
+            var graph = BuildGraph(allPoints);
+
+            // 3. Находим оптимальный порядок посещения с учетом приоритетов
+            var optimizedOrder = DijkstraBasedOptimization(warehouse.Destination, deliveryOrders, graph);
+
+            // 4. Формируем итоговый маршрут
             var route = new List<int> { -1 };
-
-            // 4. Добавляем ВСЕ заказы в маршрут (пока без оптимизации)
-            route.AddRange(deliveryOrders.Select(o => o.ID));
-
-            // 5. Завершаем маршрут возвратом на склад
+            route.AddRange(optimizedOrder.Select(o => o.ID));
             route.Add(-1);
-
-            // 6. Оптимизируем порядок заказов
-            OptimizeRoute(route, orders, warehouse.Destination);
 
             return route.ToArray();
         }
 
-        private static void OptimizeRoute(List<int> route, Order[] orders, Point depot)
+        private static Dictionary<Point, Dictionary<Point, double>> BuildGraph(List<Point> points)
         {
-            // Оптимизируем только часть маршрута между складами
-            var ordersPart = route.GetRange(1, route.Count - 2).ToList();
+            var graph = new Dictionary<Point, Dictionary<Point, double>>();
 
-            // Создаем словарь для быстрого поиска ID по координатам
-            var pointToIdMap = ordersPart
-                .ToDictionary(
-                    id => orders.First(o => o.ID == id).Destination,
-                    id => id,
-                    new PointComparer()); // Используем специальный компаратор
-
-            // Добавляем точки для оптимизации (без складов)
-            var pointsToOptimize = ordersPart
-                .Select(id => orders.First(o => o.ID == id).Destination)
-                .ToList();
-
-            // Оптимизируем порядок точек
-            var optimizedPoints = OptimizePointOrder(depot, pointsToOptimize);
-
-            // Обновляем маршрут
-            for (int i = 0; i < ordersPart.Count; i++)
+            foreach (var p1 in points)
             {
-                route[i + 1] = pointToIdMap[optimizedPoints[i]];
+                graph[p1] = new Dictionary<Point, double>();
+                foreach (var p2 in points.Where(p => !p.Equals(p1)))
+                {
+                    graph[p1][p2] = RoutingTestLogic.CalculateDistance(p1, p2);
+                }
             }
+
+            return graph;
         }
 
-        // Специальный компаратор для сравнения точек
-        private class PointComparer : IEqualityComparer<Point>
+        private static List<Order> DijkstraBasedOptimization(Point depot, List<Order> orders,
+            Dictionary<Point, Dictionary<Point, double>> graph)
         {
-            private const double Tolerance = 0.00001;
-
-            public bool Equals(Point a, Point b)
-            {
-                return Math.Abs(a.X - b.X) < Tolerance &&
-                       Math.Abs(a.Y - b.Y) < Tolerance;
-            }
-
-            public int GetHashCode(Point obj)
-            {
-                return obj.X.GetHashCode() ^ obj.Y.GetHashCode();
-            }
-        }
-
-        private static List<Point> OptimizePointOrder(Point depot, List<Point> points)
-        {
-            // Реализация алгоритма оптимизации (например, ближайший сосед)
-            var result = new List<Point>();
-            var unvisited = new HashSet<Point>(points);
+            var remainingOrders = new List<Order>(orders);
+            var optimizedOrder = new List<Order>();
             Point current = depot;
 
-            while (unvisited.Count > 0)
+            while (remainingOrders.Count > 0)
             {
-                var next = unvisited
-                    .OrderBy(p => RoutingTestLogic.CalculateDistance(current, p))
-                    .First();
+                // Находим все кратчайшие пути от текущей точки
+                var paths = DijkstraShortestPaths(graph, current);
 
-                result.Add(next);
-                unvisited.Remove(next);
-                current = next;
+                // Выбираем следующий заказ с учетом приоритета и расстояния
+                var nextOrder = SelectNextOrder(remainingOrders, paths, current);
+
+                optimizedOrder.Add(nextOrder);
+                remainingOrders.Remove(nextOrder);
+                current = nextOrder.Destination;
             }
 
-            return result;
+            return optimizedOrder;
         }
 
-    }
+        private static Dictionary<Point, double> DijkstraShortestPaths(
+            Dictionary<Point, Dictionary<Point, double>> graph,
+            Point start)
+        {
+            var distances = new Dictionary<Point, double>();
+            var visited = new HashSet<Point>();
+            var queue = new PriorityQueue<Point, double>();
 
+            foreach (var vertex in graph.Keys)
+                distances[vertex] = vertex.Equals(start) ? 0 : double.MaxValue;
+
+            queue.Enqueue(start, 0);
+
+            while (queue.Count > 0)
+            {
+                var current = queue.Dequeue();
+                if (visited.Contains(current)) continue;
+                visited.Add(current);
+
+                foreach (var neighbor in graph[current])
+                {
+                    double alt = distances[current] + neighbor.Value;
+                    if (alt < distances[neighbor.Key])
+                    {
+                        distances[neighbor.Key] = alt;
+                        queue.Enqueue(neighbor.Key, alt);
+                    }
+                }
+            }
+
+            return distances;
+        }
+
+        private static Order SelectNextOrder(List<Order> orders,
+            Dictionary<Point, double> distances,
+            Point currentPoint)
+        {
+            // Нормализуем приоритеты и расстояния
+            var maxPriority = orders.Max(o => o.Priority);
+            var minPriority = orders.Min(o => o.Priority);
+
+            var maxDistance = orders.Max(o => distances[o.Destination]);
+            var minDistance = orders.Min(o => distances[o.Destination]);
+
+            // Вычисляем рейтинг для каждого заказа
+            var ratedOrders = orders.Select(o => new
+            {
+                Order = o,
+                Rating = PriorityWeight * Normalize(o.Priority, minPriority, maxPriority, false) +
+                         DistanceWeight * Normalize(distances[o.Destination], minDistance, maxDistance, true)
+            });
+
+            return ratedOrders.OrderByDescending(x => x.Rating).First().Order;
+        }
+
+        private static double Normalize(double value, double min, double max, bool reverse)
+        {
+            if (Math.Abs(max - min) < 0.0001) return 0.5;
+            var normalized = (value - min) / (max - min);
+            return reverse ? 1 - normalized : normalized;
+        }
+    }
 }
