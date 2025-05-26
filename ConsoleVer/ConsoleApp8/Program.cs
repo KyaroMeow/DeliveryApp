@@ -32,7 +32,7 @@ namespace ConsoleApp8
         {
             foreach (Order order in orders)
             {
-                Console.WriteLine($"id:{order.ID} Point:x{order.Destination.X}, y{order.Destination.Y} Priority:{order.Priority}");
+                Console.WriteLine($"id:{order.ID} Point: X: {order.Destination.X}; Y: {order.Destination.Y} Priority:{order.Priority}");
             }
         }
 
