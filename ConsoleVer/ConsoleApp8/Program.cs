@@ -12,7 +12,7 @@ namespace ConsoleApp8
 
         static void Main(string[] args)
         {
-            Order[] orders = OrderArrays.GetOrderArray6();
+            Order[] orders = OrderArrays.GetOrderArray4();
             PrintOrders(orders);
 
             int[] route = FindOptimalRoute(orders);
@@ -32,7 +32,7 @@ namespace ConsoleApp8
         {
             foreach (Order order in orders)
             {
-                Console.WriteLine($"id:{order.ID} Point:{order.Destination.X}, {order.Destination.Y} Priority:{order.Priority}");
+                Console.WriteLine($"id:{order.ID} Point:x{order.Destination.X}, y{order.Destination.Y} Priority:{order.Priority}");
             }
         }
 
