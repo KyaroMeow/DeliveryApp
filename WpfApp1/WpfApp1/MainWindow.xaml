@@ -40,14 +40,14 @@
             </DockPanel>
             <StackPanel Grid.Row="1" Background="#F8FCEE">
                 <TextBlock Text="Заказы:" FontWeight="DemiBold" FontSize="20" Foreground="#820933" Margin="5"/>
-                <Button Content="Несколько заказов" Style="{StaticResource SidebarButtonStyle}" Click="Scenario1_Click"/>
-                <Button Content="Больше заказов" Style="{StaticResource SidebarButtonStyle}" Click="Scenario2_Click"/>
-                <Button Content="Много заказов" Style="{StaticResource SidebarButtonStyle}" Click="Scenario6_Click"/>
+                <Button Content="Несколько заказов" Style="{StaticResource SidebarButtonStyle}" Click="Array1_Click"/>
+                <Button Content="Больше заказов" Style="{StaticResource SidebarButtonStyle}" Click="Array2_Click"/>
+                <Button Content="Много заказов" Style="{StaticResource SidebarButtonStyle}" Click="Array6_Click"/>
                 <TextBlock Text="Районы:" FontWeight="DemiBold" FontSize="20" Foreground="#820933" Margin="5"/>
-                <Button Content="Один район" Style="{StaticResource SidebarButtonStyle}" Click="Scenario3_Click"/>
-                <Button Content="Разные районы" Style="{StaticResource SidebarButtonStyle}" Click="Scenario4_Click"/>
+                <Button Content="Один район" Style="{StaticResource SidebarButtonStyle}" Click="Array3_Click"/>
+                <Button Content="Разные районы" Style="{StaticResource SidebarButtonStyle}" Click="Array4_Click"/>
                 <TextBlock Text="Прочее:" FontWeight="DemiBold" FontSize="20" Foreground="#820933" Margin="5"/>
-                <Button Content="Разный приоритет" Style="{StaticResource SidebarButtonStyle}" Click="Scenario5_Click"/>
+                <Button Content="Разный приоритет" Style="{StaticResource SidebarButtonStyle}" Click="Array5_Click"/>
             </StackPanel>
         </Grid>
 
@@ -63,7 +63,7 @@
         </StackPanel>
 
         <!-- Main Graph Area -->
-        <Canvas x:Name="GraphCanvas" Margin="0,50,0,0" Background="#F8FDED">
+        <Canvas x:Name="MapCanvas" Margin="0,50,0,0" Background="#F8FDED">
             <!-- Тут программно будут добавляться вершины и линии -->
         </Canvas>
     </Grid>
