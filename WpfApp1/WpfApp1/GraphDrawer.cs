@@ -1,71 +1,79 @@
-﻿using System.Windows.Controls;
+﻿using BestDelivery;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using BestDelivery;
+
 
 namespace WpfApp1
 {
-        public static class GraphDrawer
-        {
-            private const double NodeSize = 10;
-            private const double Scale = 5; // масштаб для визуализации
+	public class GraphDrawer
+	{
+		private readonly Canvas _canvas;
+		private readonly CoordinateTransformer _transformer;
 
-            public static void Draw(Canvas canvas, List<Order> orders, int[] route)
-            {
-                canvas.Children.Clear();
+		public GraphDrawer(Canvas targetCanvas, Order[] orders)
+		{
+			_canvas = targetCanvas;
+			_transformer = new CoordinateTransformer(orders);
+		}
 
-                // рисуем рёбра маршрута
-                for (int i = 0; i < route.Length - 1; i++)
-                {
-                    Point from = GetPointById(orders, route[i]);
-                    Point to = GetPointById(orders, route[i + 1]);
+		public void DrawGraph(Order[] orders, int[] route)
+		{
+			_canvas.Children.Clear();
 
-                    var line = new Line
-                    {
-                        X1 = from.X * Scale,
-                        Y1 = from.Y * Scale,
-                        X2 = to.X * Scale,
-                        Y2 = to.Y * Scale,
-                        Stroke = Brushes.Black,
-                        StrokeThickness = 2
-                    };
-                    canvas.Children.Add(line);
-                }
+			var orderDict = orders.ToDictionary(o => o.ID, o => o);
 
-                // рисуем вершины
-                foreach (var order in orders)
-                {
-                    var ellipse = new Ellipse
-                    {
-                        Width = NodeSize,
-                        Height = NodeSize,
-                        Fill = order.ID == -1 ? Brushes.Red : GetColorByPriority(order.Priority)
-                    };
-                    Canvas.SetLeft(ellipse, order.Destination.X * Scale - NodeSize / 2);
-                    Canvas.SetTop(ellipse, order.Destination.Y * Scale - NodeSize / 2);
-                    canvas.Children.Add(ellipse);
+			// Draw route lines
+			for (int i = 0; i < route.Length - 1; i++)
+			{
+				var from = _transformer.Transform(orderDict[route[i]].Destination);
+				var to = _transformer.Transform(orderDict[route[i + 1]].Destination);
 
-                    var label = new TextBlock
-                    {
-                        Text = order.ID.ToString(),
-                        Foreground = Brushes.Black,
-                        FontSize = 10
-                    };
-                    Canvas.SetLeft(label, order.Destination.X * Scale + 5);
-                    Canvas.SetTop(label, order.Destination.Y * Scale - 5);
-                    canvas.Children.Add(label);
-                }
-            }
+				var line = new Line
+				{
+					X1 = from.X,
+					Y1 = from.Y,
+					X2 = to.X,
+					Y2 = to.Y,
+					Stroke = Brushes.Gray,
+					StrokeThickness = 2
+				};
+				_canvas.Children.Add(line);
+			}
 
-            private static Point GetPointById(List<Order> orders, int id) =>
-                orders.First(o => o.ID == id).Destination;
+			// Draw points
+			foreach (var order in orders)
+			{
+				var p = _transformer.Transform(order.Destination);
 
-            private static Brush GetColorByPriority(double priority)
-            {
-                // чем выше приоритет, тем ближе к красному
-                byte red = (byte)(255 * priority);
-                byte green = (byte)(255 * (1 - priority));
-                return new SolidColorBrush(Color.FromRgb(red, green, 0));
-            }
-        }
+				var ellipse = new Ellipse
+				{
+					Width = 10,
+					Height = 10,
+					Fill = order.ID == -1 ? Brushes.Red : GetPriorityBrush(order.Priority)
+				};
+
+				Canvas.SetLeft(ellipse, p.X - 5);
+				Canvas.SetTop(ellipse, p.Y - 5);
+				_canvas.Children.Add(ellipse);
+
+				var label = new TextBlock
+				{
+					Text = order.ID.ToString(),
+					FontSize = 10,
+					Foreground = Brushes.Black
+				};
+				Canvas.SetLeft(label, p.X + 6);
+				Canvas.SetTop(label, p.Y - 6);
+				_canvas.Children.Add(label);
+			}
+		}
+
+		private Brush GetPriorityBrush(double priority)
+		{
+			byte r = (byte)(priority * 255);
+			byte g = (byte)((1 - priority) * 255);
+			return new SolidColorBrush(Color.FromRgb(r, g, 0));
+		}
+	}
 }

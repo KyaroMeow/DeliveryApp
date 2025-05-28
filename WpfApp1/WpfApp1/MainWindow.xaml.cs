@@ -1,5 +1,13 @@
 ﻿using BestDelivery;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Linq;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Windows.Shapes;
+using System.Windows.Input;
+
 
 namespace WpfApp1
 {
@@ -8,20 +16,25 @@ namespace WpfApp1
     /// </summary>
     public partial class MainWindow : Window
     {
-        private List<Order> currentOrders = new();
 
-        public MainWindow()
+		private List<Order> currentOrders = new List<Order>();
+		public MainWindow()
         {
             InitializeComponent();
+			
+			ZoomPanHandler.Attach(GraphContainer, ZoomTransform, PanTransform);
         }
 
         private void LoadOrders(Order[] orders)
         {
-            currentOrders = new List<Order>(orders);
-            int[] route = RouteHelper.FindOptimalRoute(orders);
-            GraphDrawer.Draw(MapCanvas, currentOrders, route);
 
-            var realOrders = orders.Where(o => o.ID != -1).ToArray();
+			GraphContainer.Children.Clear();
+
+			int[] route = RouteHelper.FindOptimalRoute(orders);
+			var drawer = new GraphDrawer(GraphContainer, orders);
+			drawer.DrawGraph(orders, route);
+
+			var realOrders = orders.Where(o => o.ID != -1).ToArray();
             var depot = orders.First(o => o.ID == -1).Destination;
             if (RoutingTestLogic.TestRoutingSolution(depot, realOrders, route, out double cost))
             {
@@ -33,13 +46,29 @@ namespace WpfApp1
             }
         }
 
-        private void Array1_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray1());
+
+		private void Array1_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray1());
         private void Array2_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray2());
         private void Array3_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray3());
         private void Array4_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray4());
         private void Array5_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray5());
         private void Array6_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray6());
-        private void ToggleSidebar_Click(object sender, RoutedEventArgs e)
+		private void GraphContainer_RightClick(object sender, MouseButtonEventArgs e)
+		{
+			BestDelivery.Point clickPos = e.GetPosition(GraphContainer);
+
+			var dialog = new AddPointWindow(clickPos.X, clickPos.Y); // передаём координаты
+			if (dialog.ShowDialog() == true)
+			{
+				var newOrder = dialog.CreatedOrder;
+				currentOrders.Add(newOrder);
+				LoadOrders(currentOrders.ToArray());
+			}
+
+			e.Handled = true; // чтобы не сбрасывалось панорамирование
+		}
+
+		private void ToggleSidebar_Click(object sender, RoutedEventArgs e)
         {
             Sidebar.Visibility = Visibility.Visible;
         }
