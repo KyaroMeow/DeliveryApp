@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GeoPoint = BestDelivery.Point;
+using WpfPoint = System.Windows.Point;
 
 namespace WpfApp1
 {

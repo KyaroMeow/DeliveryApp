@@ -1,6 +1,8 @@
 ﻿using BestDelivery;
 using System.Windows;
 using System.Windows.Controls;
+using GeoPoint = BestDelivery.Point;
+using WpfPoint = System.Windows.Point;
 
 namespace WpfApp1
 {
@@ -19,6 +21,13 @@ namespace WpfApp1
 			this.orders = orders;
 			this.x = x;
 			this.y = y;
+			// Устанавливаем начальное значение приоритета
+			PrioritySlider.Value = 1.0;
+
+			// Делаем окно модальным
+			this.WindowStartupLocation = WindowStartupLocation.Manual;
+			this.ShowInTaskbar = false;
+			this.ResizeMode = ResizeMode.NoResize;
 		}
 
 		private void Add_Click(object sender, RoutedEventArgs e)

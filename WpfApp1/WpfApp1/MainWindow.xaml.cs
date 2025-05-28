@@ -7,7 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows.Shapes;
 using System.Windows.Input;
-
+using GeoPoint = BestDelivery.Point;
+using WpfPoint = System.Windows.Point;
 
 namespace WpfApp1
 {
@@ -31,23 +32,28 @@ namespace WpfApp1
             currentOrders = orders.ToList();
 
             GraphContainer.Children.Clear();
-
-			int[] route = RouteHelper.FindOptimalRoute(orders);
+			
+            int[] route = RouteHelper.FindOptimalRoute(orders);
 			var drawer = new GraphDrawer(GraphContainer, orders);
 			drawer.DrawGraph(orders, route);
 
 			var realOrders = orders.Where(o => o.ID != -1).ToArray();
             var depot = orders.First(o => o.ID == -1).Destination;
-            if (RoutingTestLogic.TestRoutingSolution(depot, realOrders, route, out double cost))
-            {
-                MessageBox.Show($"Маршрут построен. Стоимость: {cost:0.00}", "Инфо", MessageBoxButton.OK);
-            }
-            else
-            {
-                MessageBox.Show("Ошибка в маршруте." + String.Join(", ", route), "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
+			if (RoutingTestLogic.TestRoutingSolution(depot, realOrders, route, out double cost))
+			{
 
+				RouteCostText.Text = $"{cost:0.00}";
+			}
+			else
+			{
+				MessageBox.Show("Ошибка в маршруте." + String.Join(", ", route), "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+			}
+			OrdersList.Items.Clear();
+				foreach (var o in orders.Where(o => o.ID != -1))
+				{
+					OrdersList.Items.Add($"ID: {o.ID} | X:{o.Destination.X:F2}, Y:{o.Destination.Y:F2} | Приоритет: {o.Priority:F2}");
+				}
+		}
 
 		private void Array1_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray1());
         private void Array2_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray2());
@@ -55,20 +61,46 @@ namespace WpfApp1
         private void Array4_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray4());
         private void Array5_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray5());
         private void Array6_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray6());
+
+
 		private void GraphContainer_RightClick(object sender, MouseButtonEventArgs e)
 		{
-			System.Windows.Point clickPos = e.GetPosition(GraphContainer);
-            CoordinateTransformer trasformer = new CoordinateTransformer(currentOrdersMass);
-            BestDelivery.Point clickPosTrasformed = trasformer.InverseTransform(clickPos);
-            var dialog = new AddPointWindow(clickPosTrasformed.X, clickPosTrasformed.Y, currentOrdersMass); // передаём координаты
+			WpfPoint clickPos = e.GetPosition(GraphContainer);
+			CoordinateTransformer trasformer = new CoordinateTransformer(currentOrdersMass);
+			GeoPoint geoPos = trasformer.InverseTransform(clickPos);
+
+			// Создаем временный заказ для отображения точки
+			int maxId = currentOrdersMass.Any() ? currentOrdersMass.Max(o => o.ID) : 0;
+			var tempOrder = new Order
+			{
+				ID = maxId + 1,
+				Priority = 1.0,
+				Destination = geoPos
+			};
+			currentOrders.Insert(1, tempOrder);
+			LoadOrders(currentOrders.ToArray());
+
+			// Показываем окно добавления точки
+			var dialog = new AddPointWindow(geoPos.X, geoPos.Y, currentOrdersMass);
+			dialog.Owner = this;
+
+			// Переводим координаты точки на канвасе в координаты экрана
+			var pointOnScreen = GraphContainer.PointToScreen(clickPos);
+			dialog.Left = pointOnScreen.X - dialog.Width / 2;
+			dialog.Top = pointOnScreen.Y - dialog.Height;
+
 			if (dialog.ShowDialog() == true)
 			{
-				var newOrder = dialog.CreatedOrder;
-				currentOrders.Insert(1,newOrder);
+				currentOrders[1] = dialog.CreatedOrder;
+				LoadOrders(currentOrders.ToArray());
+			}
+			else
+			{
+				currentOrders.RemoveAt(1);
 				LoadOrders(currentOrders.ToArray());
 			}
 
-			e.Handled = true; // чтобы не сбрасывалось панорамирование
+			e.Handled = true;
 		}
 
 		private void ToggleSidebar_Click(object sender, RoutedEventArgs e)
@@ -79,26 +111,5 @@ namespace WpfApp1
         {
             Sidebar.Visibility = Visibility.Collapsed;
         }
-
-        //private void AddOrder_Click(object sender, RoutedEventArgs e)
-        //{
-        //    if (int.TryParse(InputX.Text, out int x) &&
-        //        int.TryParse(InputY.Text, out int y) &&
-        //        double.TryParse(InputPriority.Text, out double priority))
-        //    {
-        //        int newId = currentOrders.Count;
-        //        currentOrders.Add(new Order
-        //        {
-        //            ID = newId,
-        //            Destination = new Point { X = x, Y = y },
-        //            Priority = priority
-        //        });
-        //        LoadOrders(currentOrders.ToArray());
-        //    }
-        //    else
-        //    {
-        //        MessageBox.Show("Неверные значения координат или приоритета.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-        //    }
-        //}
     }
 }

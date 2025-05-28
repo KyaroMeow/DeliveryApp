@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 
+
 namespace WpfApp1
 {
     public static class ZoomPanHandler
@@ -107,15 +108,6 @@ namespace WpfApp1
 				_velocity = delta;
 			};
 
-			// ПКМ — сброс панорамы
-			
-
-			// Двойной клик — сброс зума
-			//canvas.MouseDoubleClick += (s, e) =>
-			//{
-			//	zoom.ScaleX = 1;
-			//	zoom.ScaleY = 1;
-			//};
 		}
 
 		private static double Clamp(double value, double min, double max)
