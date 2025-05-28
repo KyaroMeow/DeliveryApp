@@ -48,8 +48,8 @@ namespace WpfApp1
 
 				var ellipse = new Ellipse
 				{
-					Width = 10,
-					Height = 10,
+					Width = 30,
+					Height = 30,
 					Fill = order.ID == -1 ? Brushes.Red : GetPriorityBrush(order.Priority)
 				};
 
@@ -60,11 +60,11 @@ namespace WpfApp1
 				var label = new TextBlock
 				{
 					Text = order.ID.ToString(),
-					FontSize = 10,
+					FontSize = 20,
 					Foreground = Brushes.Black
 				};
-				Canvas.SetLeft(label, p.X + 6);
-				Canvas.SetTop(label, p.Y - 6);
+				Canvas.SetLeft(label, p.X + 25);
+				Canvas.SetTop(label, p.Y - 25);
 				_canvas.Children.Add(label);
 			}
 		}

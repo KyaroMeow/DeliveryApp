@@ -108,11 +108,7 @@ namespace WpfApp1
 			};
 
 			// ПКМ — сброс панорамы
-			canvas.MouseRightButtonDown += (s, e) =>
-			{
-				pan.X = 0;
-				pan.Y = 0;
-			};
+			
 
 			// Двойной клик — сброс зума
 			//canvas.MouseDoubleClick += (s, e) =>

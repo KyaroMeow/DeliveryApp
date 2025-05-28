@@ -16,9 +16,9 @@ namespace WpfApp1
     /// </summary>
     public partial class MainWindow : Window
     {
-
-		private List<Order> currentOrders = new List<Order>();
-		public MainWindow()
+        private List<Order> currentOrders = new List<Order>();
+        private Order[] currentOrdersMass;
+        public MainWindow()
         {
             InitializeComponent();
 			
@@ -27,8 +27,10 @@ namespace WpfApp1
 
         private void LoadOrders(Order[] orders)
         {
+            currentOrdersMass = orders;
+            currentOrders = orders.ToList();
 
-			GraphContainer.Children.Clear();
+            GraphContainer.Children.Clear();
 
 			int[] route = RouteHelper.FindOptimalRoute(orders);
 			var drawer = new GraphDrawer(GraphContainer, orders);
@@ -55,13 +57,14 @@ namespace WpfApp1
         private void Array6_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray6());
 		private void GraphContainer_RightClick(object sender, MouseButtonEventArgs e)
 		{
-			BestDelivery.Point clickPos = e.GetPosition(GraphContainer);
-
-			var dialog = new AddPointWindow(clickPos.X, clickPos.Y); // передаём координаты
+			System.Windows.Point clickPos = e.GetPosition(GraphContainer);
+            CoordinateTransformer trasformer = new CoordinateTransformer(currentOrdersMass);
+            BestDelivery.Point clickPosTrasformed = trasformer.InverseTransform(clickPos);
+            var dialog = new AddPointWindow(clickPosTrasformed.X, clickPosTrasformed.Y, currentOrdersMass); // передаём координаты
 			if (dialog.ShowDialog() == true)
 			{
 				var newOrder = dialog.CreatedOrder;
-				currentOrders.Add(newOrder);
+				currentOrders.Insert(1,newOrder);
 				LoadOrders(currentOrders.ToArray());
 			}
 

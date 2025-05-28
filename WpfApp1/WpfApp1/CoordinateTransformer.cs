@@ -27,12 +27,21 @@ namespace WpfApp1
 			scaleY = targetHeight / rangeY;
 		}
 
-		public WpfPoint Transform(BestDelivery.Point geoPoint)
+		public WpfPoint Transform(Point geoPoint)
 		{
 			double x = (geoPoint.X - minX) * scaleX;
 			double y = (geoPoint.Y - minY) * scaleY;
 
 			return new WpfPoint(x, y);
 		}
-	}
+        public Point InverseTransform(WpfPoint wpfPoint)
+        {
+            double geoX = (wpfPoint.X / scaleX) + minX;
+            double geoY = (wpfPoint.Y / scaleY) + minY;
+			Point point = new Point();
+			point.X = geoX;
+			point.Y = geoY;
+            return point;
+        }
+    }
 }

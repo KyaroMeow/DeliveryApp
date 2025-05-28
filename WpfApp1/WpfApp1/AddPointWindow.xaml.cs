@@ -1,5 +1,6 @@
 ﻿using BestDelivery;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace WpfApp1
 {
@@ -7,12 +8,15 @@ namespace WpfApp1
 	{
 		private readonly double x;
 		private readonly double y;
+        private readonly Order[] orders;
 
-		public Order CreatedOrder { get; private set; }
 
-		public AddPointWindow(double x, double y)
+        public Order CreatedOrder { get; private set; }
+
+		public AddPointWindow(double x, double y, Order[] orders)
 		{
 			InitializeComponent();
+			this.orders = orders;
 			this.x = x;
 			this.y = y;
 		}
@@ -20,18 +24,21 @@ namespace WpfApp1
 		private void Add_Click(object sender, RoutedEventArgs e)
 		{
 			double priority = PrioritySlider.Value;
-			CreatedOrder = new Order
-			{
-				ID = -999, // будет заменён позже
-				Priority = priority,
-				Destination = new BestDelivery.Point
-				{
-					X = x,
-					Y = y
-				}
-			};
+            int maxId = orders.Any() ? orders.Max(o => o.ID) : 0;
 
-			DialogResult = true;
+            // Создаем новый заказ с ID на 1 больше максимального
+            CreatedOrder = new Order
+            {
+                ID = maxId + 1, // Новый ID
+                Priority = PrioritySlider.Value,
+                Destination = new BestDelivery.Point
+                {
+                    X = x,
+                    Y = y
+                }
+            };
+
+            DialogResult = true;
 
 		}
 
