@@ -21,7 +21,9 @@ namespace WpfApp1
             int[] route = RouteHelper.FindOptimalRoute(orders);
             GraphDrawer.Draw(MapCanvas, currentOrders, route);
 
-            if (RoutingTestLogic.TestRoutingSolution(GetDepot().Destination, orders, route, out double cost))
+            var realOrders = orders.Where(o => o.ID != -1).ToArray();
+            var depot = orders.First(o => o.ID == -1).Destination;
+            if (RoutingTestLogic.TestRoutingSolution(depot, realOrders, route, out double cost))
             {
                 MessageBox.Show($"Маршрут построен. Стоимость: {cost:0.00}", "Инфо", MessageBoxButton.OK);
             }
@@ -30,8 +32,6 @@ namespace WpfApp1
                 MessageBox.Show("Ошибка в маршруте." + String.Join(", ", route), "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-        private Order GetDepot() => currentOrders.First(o => o.ID == -1);
 
         private void Array1_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray1());
         private void Array2_Click(object sender, RoutedEventArgs e) => LoadOrders(OrderArrays.GetOrderArray2());
