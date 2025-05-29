@@ -1,11 +1,4 @@
 ﻿using BestDelivery;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GeoPoint = BestDelivery.Point;
-using WpfPoint = System.Windows.Point;
 
 namespace WpfApp1
 {
@@ -30,6 +23,7 @@ namespace WpfApp1
             return route.ToArray();
         }
 
+        //Builds a graph of distances between all points
         private static Dictionary<Point, Dictionary<Point, double>> BuildGraph(List<Point> points)
         {
             return points.ToDictionary(
@@ -39,6 +33,7 @@ namespace WpfApp1
             );
         }
 
+        //Optimizes the order of visits to delivery points
         private static List<Order> OptimizeVisitOrder(Point start, List<Order> orders,
             Dictionary<Point, Dictionary<Point, double>> graph)
         {
@@ -48,7 +43,10 @@ namespace WpfApp1
 
             while (remaining.Any())
             {
+
+                // Calculating the shortest distance from the current point to all others
                 var distances = Dijkstra(graph, current);
+                //Choosing the next optimal order to visit
                 var next = SelectNext(remaining, distances);
 
                 result.Add(next);
@@ -63,10 +61,11 @@ namespace WpfApp1
         {
             var dist = graph.Keys.ToDictionary(p => p, _ => double.MaxValue);
             dist[start] = 0;
-            var visited = new HashSet<Point>();
+            var visited = new HashSet<Point>();// Visited points
             var queue = new PriorityQueue<Point, double>();
             queue.Enqueue(start, 0);
 
+            // Bypassing all the neighbors of the current point
             while (queue.TryDequeue(out var current, out _))
             {
                 if (!visited.Add(current)) continue;
@@ -85,6 +84,7 @@ namespace WpfApp1
             return dist;
         }
 
+        // Selects the next order to visit based on priority and distance
         private static Order SelectNext(List<Order> orders, Dictionary<Point, double> distances)
         {
             double maxP = orders.Max(o => o.Priority);
@@ -100,6 +100,7 @@ namespace WpfApp1
             }).OrderByDescending(x => x.Score).First().Order;
         }
 
+        // Normalizes the value to the range [0, 1]
         private static double Normalize(double value, double min, double max, bool reverse)
         {
             if (Math.Abs(max - min) < 0.0001) return 0.5;
