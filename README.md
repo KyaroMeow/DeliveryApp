@@ -12,9 +12,7 @@
 
 1.6 [Техническая документация по проекту](#Doc)
 
-1.7 [Структуры данных](#DataStructures)
-
-1.8 [Алгоритм работы системы](#SystemAlgorithm)
+1.7 [Алгоритм работы системы](#SystemAlgorithm)
 
 
 <a name="Problem"></a>
@@ -229,30 +227,8 @@ Score = PriorityWeight × NormalizedPriority + DistanceWeight × NormalizedDista
 | `AnimateScale()` | Анимация масштабирования |
 
 
-<a name="DataStructures"></a>
-## 1.7 Структуры данных
-
-### Order (из библиотеки BestDelivery)
-```csharp
-public class Order
-{
-    public int ID { get; set; }           // Уникальный идентификатор заказа
-    public double Priority { get; set; }   // Приоритет заказа (0.0 - 1.0)
-    public Point Destination { get; set; } // Координаты места доставки
-}
-```
-
-### Point (из библиотеки BestDelivery)
-```csharp
-public class Point
-{
-    public double X { get; set; } // Координата X
-    public double Y { get; set; } // Координата Y
-}
-```
-
 <a name="SystemAlgorithm"></a>
-## 1.8 Алгоритм работы системы
+## 1.7 Алгоритм работы системы
 
 1. **Инициализация**: Загрузка начального набора заказов
 2. **Построение графа**: Создание матрицы расстояний между всеми точками
